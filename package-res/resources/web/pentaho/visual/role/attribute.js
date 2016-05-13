@@ -24,6 +24,21 @@ define([
 
     var Complex = context.get("pentaho/type/complex");
 
+    /**
+     * @name pentaho.visual.role.MappingAttribute
+     * @class
+     * @extends pentaho.type.Complex
+     *
+     * @amd {pentaho.type.Factory<pentaho.visual.role.MappingAttribute>} pentaho/visual/role/mapping
+     *
+     * @classDesc The class that represents an association between
+     * a containing [visual role mapping]{@link pentaho.visual.role.Mapping} and
+     * a single data property (or attribute).
+     *
+     * @description Creates a visual role mapping attribute instance.
+     * @constructor
+     * @param {pentaho.visual.role.spec.UMappingAttribute} [spec] A visual role mapping attribute specification.
+     */
     return Complex.extend({
       // How I wish...
       //get uniqueConstraintKey() {
@@ -32,6 +47,7 @@ define([
 
       type: {
         id: module.id,
+
         props: [
           {name: "name", type: "string", isRequired: true},
 

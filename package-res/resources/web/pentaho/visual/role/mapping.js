@@ -25,7 +25,47 @@ define([
     var Complex = context.get("pentaho/type/complex");
 
     /**
+     * @name pentaho.visual.role.Mapping.Type
      * @class
+     * @extends pentaho.type.Complex.Type
+     *
+     * @classDesc The type class of {@link pentaho.visual.role.Mapping}.
+     */
+
+    /**
+     * @name pentaho.visual.role.Mapping
+     * @class
+     * @extends pentaho.type.Complex
+     * @abstract
+     *
+     * @amd {pentaho.type.Factory<pentaho.visual.role.Mapping>} pentaho/visual/role
+     *
+     * @classDesc The base abstract class of visual role mappings.
+     *
+     * This type is to be used as the type of _visual role_ properties
+     * of a [visual model]{@link pentaho.visual.base.Model}.
+     * It serves two main purposes:
+     *
+     * 1. Informing about the capabilities of a visual role of a visualization.
+     * 2. Representing the mapping between a visual role and the data properties - here named "attributes" -
+     *    of a visualization's current dataset.
+     *
+     * The first is achieved when defining a subtype of this one,
+     * by configuring the type properties
+     * [levels]{@link pentaho.visual.role.Mapping.Type#levels} and
+     * [dataType]{@link pentaho.visual.role.Mapping.Type#dataType}.
+     *
+     * The second is achieved by creating a visual role mapping instance,
+     * and specifying its properties
+     * [level]{@link pentaho.visual.role.Mapping.Type#level} and
+     * [attrs]{@link pentaho.visual.role.Mapping.Type#attrs}.
+     *
+     * The related type {@link pentaho.visual.role.MappingAttribute}
+     * represents the association of the visual role with a single data property (or attribute).
+     *
+     * @description Creates a visual role mapping instance.
+     * @constructor
+     * @param {pentaho.visual.role.spec.UMapping} [spec] A visual role mapping specification.
      */
     var VisualRoleMapping = Complex.extend({
 

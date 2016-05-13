@@ -21,3 +21,10 @@
  * @name pentaho.visual.role
  * @namespace
  */
+
+/**
+ * The `visual.role.spec` namespace contains specification classes for describing visual role mappings.
+ *
+ * @name pentaho.visual.role.spec
+ * @namespace
+ */
