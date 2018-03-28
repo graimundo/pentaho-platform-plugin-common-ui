@@ -395,10 +395,14 @@ define([
             return null;
           }
 
+          var filterContext = {
+            modelAdapter: this,
+            internalData: internalData,
+            toExternal: false
+          };
+
           // Find isProperty filters and convert their property equals', name and value to the internal data space.
-          return externalFilter.visit(function(filter) {
-            return __transformFilter.call(this, filter, internalData, false);
-          }.bind(this));
+          return externalFilter.visit(__transformFilter.bind(filterContext));
         },
 
         /**
@@ -414,11 +418,14 @@ define([
           if(internalData === null) {
             return null;
           }
+          var filterContext = {
+            modelAdapter: this,
+            internalData: internalData,
+            toExternal: true
+          };
 
           // Find isProperty filters and convert their property equals', name and value to the external data space.
-          return internalFilter.visit(function(filter) {
-            return __transformFilter.call(this, filter, internalData, true);
-          }.bind(this));
+          return internalFilter.visit(__transformFilter.bind(filterContext));
         },
 
         /**
@@ -434,7 +441,7 @@ define([
          * @param {boolean} toExternal If true converts from internal to external properties,
          * the other way around if false.
          *
-         * @return {!Object.<string, pentaho.data.ICell>} The corresponding map of internal property names to cells.
+         * @return {!Object.<string, pentaho.data.ICell>} The corresponding map of internal or external property names to cells.
          *
          * @private
          */
@@ -451,13 +458,15 @@ define([
               var fieldValues = __collectFieldValues(mapping, originalValuesMap);
               if(fieldValues !== null) {
                 var fieldCells = toExternal ? strategy.invert(fieldValues) : strategy.map(fieldValues);
-                if(fieldCells !== null) {
-                  var fieldNames = toExternal ? strategy.inputFieldNames : strategy.outputFieldNames;
-
-                  fieldCells.forEach(function(fieldCell, index) {
-                    convertedValuesMap[fieldNames[index]] = fieldCell;
-                  });
+                if(fieldCells == null) {
+                  throw error.argInvalid("originalValuesMap", "Unable to convert values.");
                 }
+
+                var fieldNames = toExternal ? strategy.inputFieldNames : strategy.outputFieldNames;
+
+                fieldCells.forEach(function(fieldCell, index) {
+                  convertedValuesMap[fieldNames[index]] = fieldCell;
+                });
               }
             }
           });
@@ -589,31 +598,13 @@ define([
       return ModelAdapter;
 
       // region Filter Conversion
-      function __transformFilter(filter, internalData, toExternal) {
-        var operands;
+      function __transformFilter(filter) {
         var equalsMap;
-
-        if(filter.kind === "or") {
-          // a or b
-          // (a1 and a2) or (b1 and b2)
-          // Each isEqual must be separately converted into either a single isEqual or
-          // into a conjunction of isEquals.
-          operands = [];
-
-          filter.operands.each(function(operandFilter) {
-            operandFilter = __transformFilter.call(this, operandFilter, internalData, toExternal);
-            if(operandFilter !== null) {
-              operands.push(operandFilter);
-            }
-          }.bind(this));
-
-          return new OrFilter({operands: operands});
-        }
 
         if(filter.kind === "and") {
           // Collect and replace all isEqual children.
           equalsMap = null;
-          operands = [];
+          var operands = [];
 
           filter.operands.each(function(operandFilter) {
             if(operandFilter.kind === "isEqual") {
@@ -623,21 +614,19 @@ define([
 
               equalsMap[operandFilter.property] = operandFilter.value;
             } else {
-              // Pass-through other filter kinds.
-              operands.push(operandFilter);
+              operands.push(operandFilter.visit(__transformFilter.bind(this)));
             }
           });
 
-          if(equalsMap === null) {
-            return filter;
+          // if isEqual operands found for And filter
+          if(equalsMap !== null) {
+            // Map internal values to external values.
+            equalsMap = this.modelAdapter.__convertValuesMap(equalsMap, this.toExternal);
+
+            operands.push.apply(operands, Object.keys(equalsMap).map(function(propName) {
+              return dataUtil.createFilterIsEqualFromCell(this.internalData, propName, equalsMap[propName], __context);
+            }, this));
           }
-
-          // Map internal values to external values.
-          equalsMap = this.__convertValuesMap(equalsMap, toExternal);
-
-          operands.push.apply(operands, Object.keys(equalsMap).map(function(propName) {
-            return dataUtil.createFilterIsEqualFromCell(internalData, propName, equalsMap[propName], __context);
-          }));
 
           return operands.length === 1 ? operands[0] : new AndFilter({operands: operands});
         }
@@ -647,15 +636,15 @@ define([
           equalsMap = {};
           equalsMap[filter.property] = filter.value;
 
-          equalsMap = this.__convertValuesMap(equalsMap, toExternal);
+          equalsMap = this.modelAdapter.__convertValuesMap(equalsMap, this.toExternal);
 
-          filter = dataUtil.createFilterFromCellsMap(equalsMap, internalData, __context);
+          filter = dataUtil.createFilterFromCellsMap(equalsMap, this.internalData, __context);
 
           return filter !== null ? filter : TrueFilter.instance;
         }
 
-        // Pass-through other filter kinds.
-        return filter;
+        // visit operands of other filter kinds.
+        return null;
       }
       // endregion
     }

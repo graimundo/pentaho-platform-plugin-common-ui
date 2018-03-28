@@ -16,14 +16,15 @@
 define([
   "pentaho/type/Context",
   "pentaho/data/Table",
-  "../role/adaptationUtil"
-], function(Context, Table, adaptationUtil) {
+  "../role/adaptationUtil",
+  "tests/pentaho/util/errorMatch"
+], function(Context, Table, adaptationUtil, errorMatch) {
 
   "use strict";
 
   /* globals jasmine, console, expect, it, describe, beforeEach */
 
-  describe("pentaho.visual.base.ModelAdapter", function() {
+  describe("pentaho.visual.base.ModelAdapter", function () {
 
     var context;
     var Model;
@@ -35,9 +36,9 @@ define([
     var ElementIdentityStrategy;
     var CombineStrategy;
 
-    beforeAll(function() {
+    beforeAll(function () {
       return Context.createAsync()
-        .then(function(_context) {
+        .then(function (_context) {
 
           context = _context;
 
@@ -46,7 +47,7 @@ define([
             "pentaho/visual/base/modelAdapter",
             "pentaho/visual/role/adaptation/strategy",
             "pentaho/visual/role/externalProperty"
-          ], function(_Model, _ModelAdapter, _BaseStrategy, _ExternalProperty) {
+          ], function (_Model, _ModelAdapter, _BaseStrategy, _ExternalProperty) {
             Model = _Model;
             ModelAdapter = _ModelAdapter;
             ExternalProperty = _ExternalProperty;
@@ -75,6 +76,23 @@ define([
         ]
       };
     }
+
+    function getDataSpec2() {
+      return {
+        model: [
+          {name: "country", type: "string", label: "Country"},
+          {name: "product", type: "string", label: "Product"},
+          {name: "sales", type: "number", label: "Sales"},
+          {name: "date", type: "date", label: "Date"}
+        ],
+        rows: [
+          {c: [{v: "PT", f: "Portugal"}, "fish", 100, "2016-01-01"]},
+          {c: [{v: "PT", f: "Portugal"}, "potatoes", 200, "2015-02-03"]},
+          {c: ["Ireland", "beer", 200, "2016-01-02"]}
+        ]
+      };
+    }
+
     // endregion
 
     // ---
@@ -84,24 +102,24 @@ define([
       this.formatted = formatted;
     }
 
-    Cell.prototype.valueOf = function() {
+    Cell.prototype.valueOf = function () {
       return this.value;
     };
 
-    Cell.prototype.toString = function() {
+    Cell.prototype.toString = function () {
       return this.formatted;
     };
 
     // ---
 
-    describe(".extend(...)", function() {
+    describe(".extend(...)", function () {
 
-      it("should define a model adapter subtype when no internal model is specified", function() {
+      it("should define a model adapter subtype when no internal model is specified", function () {
 
         var DerivedModelAdapter = ModelAdapter.extend();
       });
 
-      it("should define a model adapter subtype for an internal model type having no visual roles", function() {
+      it("should define a model adapter subtype for an internal model type having no visual roles", function () {
 
         var DerivedModel = Model.extend();
 
@@ -112,9 +130,9 @@ define([
         });
       });
 
-      describe("when external visual role properties have no specification", function() {
+      describe("when external visual role properties have no specification", function () {
 
-        it("should define a model adapter subtype for an internal model type having visual roles", function() {
+        it("should define a model adapter subtype for an internal model type having visual roles", function () {
 
           var DerivedModel = Model.extend({
             $type: {
@@ -138,7 +156,7 @@ define([
           expect(externalPropType instanceof ExternalProperty.Type).toBe(true);
         });
 
-        it("should create an external visual role property for a new internal role", function() {
+        it("should create an external visual role property for a new internal role", function () {
 
           var DerivedModel = Model.extend({
             $type: {
@@ -178,7 +196,7 @@ define([
           expect(externalPropType instanceof ExternalProperty.Type).toBe(true);
         });
 
-        it("should override an external visual role property for an overridden internal role", function() {
+        it("should override an external visual role property for an overridden internal role", function () {
 
           var DerivedModel = Model.extend({
             $type: {
@@ -218,9 +236,9 @@ define([
         });
       });
 
-      describe("when external visual role properties have a specification", function() {
+      describe("when external visual role properties have a specification", function () {
 
-        it("should define a model adapter subtype for an internal model type having visual roles", function() {
+        it("should define a model adapter subtype for an internal model type having visual roles", function () {
 
           var DerivedModel = Model.extend({
             $type: {
@@ -247,7 +265,7 @@ define([
           expect(externalPropType instanceof ExternalProperty.Type).toBe(true);
         });
 
-        it("should create an external visual role property for a new internal role", function() {
+        it("should create an external visual role property for a new internal role", function () {
 
           var DerivedModel = Model.extend({
             $type: {
@@ -290,7 +308,7 @@ define([
           expect(externalPropType instanceof ExternalProperty.Type).toBe(true);
         });
 
-        it("should override an external visual role property for an overridden internal role", function() {
+        it("should override an external visual role property for an overridden internal role", function () {
 
           var DerivedModel = Model.extend({
             $type: {
@@ -334,13 +352,13 @@ define([
       });
     });
 
-    describe("update internal model and external adapters", function() {
+    describe("update internal model and external adapters", function () {
 
-      describe("when constructed", function() {
+      describe("when constructed", function () {
 
-        describe("Mapping#modeFixed", function() {
+        describe("Mapping#modeFixed", function () {
 
-          it("should update the modeFixed of the internal mapping", function() {
+          it("should update the modeFixed of the internal mapping", function () {
 
             var strategies = [ElementIdentityStrategy.type];
 
@@ -366,9 +384,9 @@ define([
           });
         });
 
-        describe("Mapping#fields", function() {
+        describe("Mapping#fields", function () {
 
-          it("should update the fields of the internal mapping (identity strategy)", function() {
+          it("should update the fields of the internal mapping (identity strategy)", function () {
 
             var strategies = [ElementIdentityStrategy.type];
 
@@ -393,7 +411,7 @@ define([
             expect(fields.at(0).name).toBe("country");
           });
 
-          it("should update the fields of the internal mapping (many to one strategy)", function() {
+          it("should update the fields of the internal mapping (many to one strategy)", function () {
 
             var strategies = [CombineStrategy.type];
 
@@ -420,9 +438,9 @@ define([
           });
         });
 
-        describe("Model#data", function() {
+        describe("Model#data", function () {
 
-          it("should update the data of the internal model with the external data (identity strategy)", function() {
+          it("should update the data of the internal model with the external data (identity strategy)", function () {
 
             var strategies = [ElementIdentityStrategy.type];
 
@@ -448,7 +466,7 @@ define([
             expect(internalData).toBe(modelAdapter.data);
           });
 
-          it("should update the data of the internal model with a copy (many to one strategy)", function() {
+          it("should update the data of the internal model with a copy (many to one strategy)", function () {
 
             var strategies = [CombineStrategy.type];
 
@@ -475,9 +493,9 @@ define([
           });
         });
 
-        describe("Model#selectionFilter", function() {
+        describe("Model#selectionFilter", function () {
 
-          it("should update the selectionFilter of the internal model (identity strategy)", function() {
+          it("should update the selectionFilter of the internal model (identity strategy)", function () {
 
             var strategies = [ElementIdentityStrategy.type];
 
@@ -490,7 +508,7 @@ define([
 
             var model = new ModelWithStringRole();
 
-            spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function() {
+            spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function () {
               return [new Cell("PT2", "Portugal")];
             });
 
@@ -510,7 +528,7 @@ define([
             expect(selectionFilter.equals(expectedFilter)).toBe(true);
           });
 
-          it("should update the selectionFilter of the internal model (many to one strategy)", function() {
+          it("should update the selectionFilter of the internal model (many to one strategy)", function () {
 
             var strategies = [CombineStrategy.type];
 
@@ -523,7 +541,7 @@ define([
 
             var model = new ModelWithStringRole();
 
-            spyOn(CombineStrategy.prototype, "map").and.callFake(function() {
+            spyOn(CombineStrategy.prototype, "map").and.callFake(function () {
               return [new Cell("PT~fish", "Portugal ~ Fish")];
             });
 
@@ -551,14 +569,14 @@ define([
         });
       });
 
-      describe("when external fields change", function() {
+      describe("when external fields change", function () {
 
         var CustomModel;
         var DerivedModelAdapter;
         var internalPropType;
         var modelAdapter;
 
-        beforeAll(function() {
+        beforeAll(function () {
           CustomModel = Model.extend({
             $type: {
               props: {
@@ -585,7 +603,7 @@ define([
           internalPropType = CustomModel.type.get("roleA");
         });
 
-        beforeEach(function() {
+        beforeEach(function () {
 
           var model = new ModelWithStringRole();
 
@@ -598,7 +616,7 @@ define([
           });
         });
 
-        it("should update the modeFixed of the internal mapping", function() {
+        it("should update the modeFixed of the internal mapping", function () {
 
           expect(modelAdapter.model.roleA.modeFixed).toBe(internalPropType.modes.at(0));
 
@@ -607,7 +625,7 @@ define([
           expect(modelAdapter.model.roleA.modeFixed).toBe(internalPropType.modes.at(1));
         });
 
-        it("should update the fields of the internal mapping", function() {
+        it("should update the fields of the internal mapping", function () {
 
           var internalFields = modelAdapter.model.roleA.fields;
 
@@ -620,7 +638,7 @@ define([
           expect(internalFields.at(0).name).toBe("sales");
         });
 
-        it("should update the strategy even if the same strategy type is being used", function() {
+        it("should update the strategy even if the same strategy type is being used", function () {
 
           var strategy1 = modelAdapter.roleA.strategy;
           var strategyType1 = modelAdapter.__adaptationModel.roleInfoMap.roleA.strategyApplication.strategyType;
@@ -643,7 +661,7 @@ define([
         });
 
         it("should not update the data of the internal model if the new strategies " +
-           "are still identity", function() {
+          "are still identity", function () {
 
           var internalData = modelAdapter.model.data;
 
@@ -653,12 +671,12 @@ define([
         });
       });
 
-      describe("when external data changes (same metadata)", function() {
+      describe("when external data changes (same metadata)", function () {
 
         var DerivedModelAdapter;
         var modelAdapter;
 
-        beforeAll(function() {
+        beforeAll(function () {
 
           var strategies = [ElementIdentityStrategy.type];
 
@@ -670,7 +688,7 @@ define([
           ]);
         });
 
-        beforeEach(function() {
+        beforeEach(function () {
 
           var model = new ModelWithStringRole();
 
@@ -683,7 +701,7 @@ define([
           });
         });
 
-        it("should update the strategy even if the same strategy type is being used", function() {
+        it("should update the strategy even if the same strategy type is being used", function () {
 
           var strategy1 = modelAdapter.roleA.strategy;
           expect(strategy1).not.toBe(null);
@@ -700,7 +718,7 @@ define([
           expect(strategy2).not.toBe(strategy1);
         });
 
-        it("should not update the modeFixed of the internal mapping", function() {
+        it("should not update the modeFixed of the internal mapping", function () {
 
           var internalMode1 = modelAdapter.model.roleA.modeFixed;
           expect(internalMode1).not.toBe(null);
@@ -717,7 +735,7 @@ define([
           expect(internalMode2).toBe(internalMode1);
         });
 
-        it("should not update the fields of the internal mapping", function() {
+        it("should not update the fields of the internal mapping", function () {
 
           var internalFields = modelAdapter.model.roleA.fields;
 
@@ -737,9 +755,9 @@ define([
         });
       });
 
-      describe("when external selectionFilter changes", function() {
+      describe("when external selectionFilter changes", function () {
 
-        it("should update the selectionFilter of the internal model", function() {
+        it("should update the selectionFilter of the internal model", function () {
 
           var strategies = [ElementIdentityStrategy.type];
 
@@ -752,7 +770,7 @@ define([
 
           var model = new ModelWithStringRole();
 
-          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function() {
+          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function () {
             return [new Cell("PT2", "Portugal")];
           });
 
@@ -769,7 +787,7 @@ define([
 
           expect(selectionFilter1).not.toBe(null);
 
-          ElementIdentityStrategy.prototype.map.and.callFake(function() {
+          ElementIdentityStrategy.prototype.map.and.callFake(function () {
             return [new Cell("PT4", "Portugal")];
           });
 
@@ -786,7 +804,7 @@ define([
           expect(selectionFilter2).not.toBe(selectionFilter1);
         });
 
-        it("should not change the strategy", function() {
+        it("should not change the strategy", function () {
 
           var strategies = [ElementIdentityStrategy.type];
 
@@ -799,7 +817,7 @@ define([
 
           var model = new ModelWithStringRole();
 
-          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function() {
+          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function () {
             return [new Cell("PT2", "Portugal")];
           });
 
@@ -812,7 +830,7 @@ define([
             selectionFilter: {_: "=", p: "country", v: "PT"}
           });
 
-          ElementIdentityStrategy.prototype.map.and.callFake(function() {
+          ElementIdentityStrategy.prototype.map.and.callFake(function () {
             return [new Cell("PT4", "Portugal")];
           });
 
@@ -831,7 +849,7 @@ define([
           expect(strategy2).toBe(strategy1);
         });
 
-        it("should not change the data of the internal model", function() {
+        it("should not change the data of the internal model", function () {
 
           var strategies = [ElementIdentityStrategy.type];
 
@@ -844,7 +862,7 @@ define([
 
           var model = new ModelWithStringRole();
 
-          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function() {
+          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function () {
             return [new Cell("PT2", "Portugal")];
           });
 
@@ -857,7 +875,7 @@ define([
             selectionFilter: {_: "=", p: "country", v: "PT"}
           });
 
-          ElementIdentityStrategy.prototype.map.and.callFake(function() {
+          ElementIdentityStrategy.prototype.map.and.callFake(function () {
             return [new Cell("PT4", "Portugal")];
           });
 
@@ -877,9 +895,9 @@ define([
         });
       });
 
-      describe("when internal selectionFilter changes", function() {
+      describe("when internal selectionFilter changes", function () {
 
-        it("should update the selectionFilter of the external model (identity strategy)", function() {
+        it("should update the selectionFilter of the external model (identity strategy)", function () {
           var strategies = [ElementIdentityStrategy.type];
 
           var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
@@ -891,7 +909,7 @@ define([
 
           var model = new ModelWithStringRole();
 
-          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function() {
+          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function () {
             return [new Cell("PT2", "Portugal")];
           });
 
@@ -908,7 +926,7 @@ define([
 
           expect(selectionFilter1).not.toBe(null);
 
-          spyOn(ElementIdentityStrategy.prototype, "invert").and.callFake(function() {
+          spyOn(ElementIdentityStrategy.prototype, "invert").and.callFake(function () {
             return [new Cell("PT4", "Portugal")];
           });
 
@@ -928,7 +946,7 @@ define([
           expect(selectionFilter2.equals(expectedFilter)).toBe(true);
         });
 
-        it("should update the selectionFilter of the external model (many to one strategy)", function() {
+        it("should update the selectionFilter of the external model (many to one strategy)", function () {
           var strategies = [CombineStrategy.type];
 
           var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
@@ -940,7 +958,7 @@ define([
 
           var model = new ModelWithStringRole();
 
-          spyOn(CombineStrategy.prototype, "map").and.callFake(function() {
+          spyOn(CombineStrategy.prototype, "map").and.callFake(function () {
             return [new Cell("PT~fish", "Portugal ~ Fish")];
           });
 
@@ -962,7 +980,7 @@ define([
           var selectionFilter1 = modelAdapter.model.selectionFilter;
           expect(selectionFilter1).not.toBe(null);
 
-          spyOn(CombineStrategy.prototype, "invert").and.callFake(function() {
+          spyOn(CombineStrategy.prototype, "invert").and.callFake(function () {
             return [new Cell("PT4", "Portugal"), new Cell("bird", "Bird")];
           });
           // ---
@@ -989,10 +1007,21 @@ define([
       });
     });
 
-    describe("#_convertFilterToExternal", function() {
+    describe("#_convertFilterToExternal", function () {
+
+      /*
+      beforeEach(function () {
+        spyOn(CombineStrategy.prototype, "map").and.callFake(function (inputValues) {
+          if( inputValues[0] === undefined || inputValues[1] === undefined ) {
+            return null;
+          }
+          return [new Cell( inputValues[0] +"~" + inputValues[1], "")];
+        });
+      });
+      */
 
       it("should convert the filter's internal model namespace to " +
-        "the external model namespace (many to one strategy)", function() {
+        "the external model namespace (many to one strategy)", function () {
         var strategies = [CombineStrategy.type];
 
         var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
@@ -1004,7 +1033,7 @@ define([
 
         var model = new ModelWithStringRole();
 
-        spyOn(CombineStrategy.prototype, "map").and.callFake(function() {
+        spyOn(CombineStrategy.prototype, "map").and.callFake(function () {
           return [new Cell("PT~fish", "Portugal ~ Fish")];
         });
 
@@ -1023,13 +1052,14 @@ define([
           }
         });
 
+        /*
         var selectionFilter1 = modelAdapter.selectionFilter;
         expect(selectionFilter1).not.toBe(null);
 
         var selectionInternalFilter1 = modelAdapter.model.selectionFilter;
         expect(selectionInternalFilter1).not.toBe(null);
-
-        spyOn(CombineStrategy.prototype, "invert").and.callFake(function() {
+*/
+        spyOn(CombineStrategy.prototype, "invert").and.callFake(function () {
           return [new Cell("PT4", "Portugal"), new Cell("bird", "Bird")];
         });
         // ---
@@ -1059,6 +1089,132 @@ define([
           ]
         });
         expect(translatedFilter.equals(expectedFilter)).toBe(true);
+      });
+    });
+
+    describe("#_convertFilterToInternal", function () {
+
+      var modelAdapter;
+
+      beforeEach(function () {
+        var strategies = [CombineStrategy.type];
+
+        var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
+          {
+            name: "roleA",
+            strategies: strategies
+          }
+        ]);
+
+        var model = new ModelWithStringRole();
+
+        modelAdapter = new DerivedModelAdapter({
+          model: model,
+          data: new Table(getDataSpec2()),
+          roleA: {
+            fields: ["country", "product"]
+          }
+        });
+      });
+
+      describe("When using a combine strategy", function () {
+
+        beforeEach(function () {
+          spyOn(CombineStrategy.prototype, "map").and.callFake(function (inputValues) {
+            if( inputValues[0] === undefined || inputValues[1] === undefined ) {
+              return null;
+            }
+            return [new Cell( inputValues[0] +"~" + inputValues[1], "")];
+          });
+        });
+
+        describe("should convert the filter's external model namespace to " +
+          "the internal model namespace ", function() {
+
+          it("when filtering with an And of isEquals (C=PT & P=fish)", function () {
+
+            var externalFilter = context.instances.get({
+              _: "and",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "=", p: "product", v: "fish"}
+              ]
+            });
+
+            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+            // ---
+            var expectedInternalFilter = context.instances.get({_: "=", p: CombineStrategy.columnName, v: "PT~fish"});
+            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
+          });
+
+          it("when filtering with an Or of And of isEquals (C=PT & P=fish) | (C=Ireland & P=beer)", function () {
+
+            // (C=PT & P=fish) | (C=Ireland & P=beer)
+            var externalFilter = context.instances.get({
+              _: "or",
+              o: [
+                { _: "and",
+                  o: [
+                    {_: "=", p: "country", v: "PT"},
+                    {_: "=", p: "product", v: "fish"}
+                  ]
+                },
+                { _: "and",
+                  o: [
+                    {_: "=", p: "country", v: "Ireland"},
+                    {_: "=", p: "product", v: "beer"}
+                  ]
+                }
+              ]
+            });
+
+            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+            // ---
+            var expectedInternalFilter = context.instances.get({
+              _: "or",
+              o: [
+                {_: "=", p: CombineStrategy.columnName, v: "PT~fish"},
+                {_: "=", p: CombineStrategy.columnName, v: "Ireland~beer"}]
+            } );
+            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
+          });
+        });
+
+        describe("should throw when the filter doesn't provide sufficient information for conversion.", function () {
+          it("Using an isEqual filter", function () {
+
+            var externalFilter = context.instances.get(
+              {_: "=", p: "country", v: "PT"}
+            );
+
+            var act = function() {
+              modelAdapter._convertFilterToInternal(externalFilter);
+            };
+
+            // ---
+            expect( act ).toThrow(errorMatch.argInvalid("originalValuesMap"));
+          });
+
+          it("Using an Or of isEqual filter", function () {
+
+            var externalFilter = context.instances.get({
+              _: "or",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "=", p: "product", v: "fish"}
+              ]
+            });
+
+            var act = function() {
+              modelAdapter._convertFilterToInternal(externalFilter);
+            };
+
+            // ---
+            expect( act ).toThrow(errorMatch.argInvalid("originalValuesMap"));
+          });
+        });
       });
     });
   });
