@@ -93,10 +93,11 @@ define([
     "./model",
     "../role/externalProperty",
     "pentaho/data/filter/true",
+    "pentaho/data/filter/false",
     "pentaho/data/filter/or",
     "pentaho/data/filter/and",
     "pentaho/data/filter/isEqual",
-    function(AbstractModel, Model, ExternalProperty, TrueFilter, OrFilter, AndFilter, IsEqualFilter) {
+    function(AbstractModel, Model, ExternalProperty, TrueFilter, FalseFilter, OrFilter, AndFilter, IsEqualFilter) {
 
       var __context = this;
       var __externalPropertyType = ExternalProperty.type;
@@ -606,17 +607,26 @@ define([
           equalsMap = null;
           var operands = [];
 
-          filter.operands.each(function(operandFilter) {
+          for(var iOperand=0; iOperand < filter.operands.count; iOperand++) {
+            var operandFilter = filter.operands.at(iOperand);
+
             if(operandFilter.kind === "isEqual") {
               if(equalsMap === null) {
                 equalsMap = Object.create(null);
               }
 
+              // The same property cannot have different values at the same time therefore return False
+              if(equalsMap[operandFilter.property] !== undefined &&
+                equalsMap[operandFilter.property] !== operandFilter.value) {
+                return FalseFilter.instance;
+              }
+
               equalsMap[operandFilter.property] = operandFilter.value;
             } else {
-              operands.push(operandFilter.visit(__transformFilter.bind(this)));
+              // we only support and of isEquals
+              throw error.argInvalid("filter", "Converting and filter with " + operandFilter.kind + " operand is not supported.");
             }
-          });
+          }
 
           // if isEqual operands found for And filter
           if(equalsMap !== null) {
@@ -628,7 +638,7 @@ define([
             }, this));
           }
 
-          return operands.length === 1 ? operands[0] : new AndFilter({operands: operands});
+          return new AndFilter({operands: operands});
         }
 
         // Top-level isEqual
