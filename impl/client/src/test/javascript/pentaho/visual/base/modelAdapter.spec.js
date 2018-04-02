@@ -112,7 +112,7 @@ define([
 
     // ---
 
-    xdescribe(".extend(...)", function () {
+    describe(".extend(...)", function () {
 
       it("should define a model adapter subtype when no internal model is specified", function () {
 
@@ -352,7 +352,7 @@ define([
       });
     });
 
-    xdescribe("update internal model and external adapters", function () {
+    describe("update internal model and external adapters", function () {
 
       describe("when constructed", function () {
 
@@ -1161,7 +1161,7 @@ define([
 
           });
 
-          it("when filtering a top And of different properties", function () {
+          xit("when filtering a top And of different properties", function () {
             var externalFilter = context.instances.get({
               _: "and",
               o: [
@@ -1204,11 +1204,11 @@ define([
 
         describe("should throw", function () {
 
-          it("And with operands other than isEqual", function () {
+          it("And with operands other than isEqual, or, and", function () {
             var externalFilter = context.instances.get({
               _: "and",
               o: [
-                {_: "or",
+                {_: ">",
                 o: [
                   {_: "=", p: "country", v: "PT"}
                 ]}
@@ -1227,7 +1227,7 @@ define([
 
        });
 
-      xdescribe("When using a combine strategy", function () {
+      describe("When using a combine strategy", function () {
 
         var modelAdapter;
 
