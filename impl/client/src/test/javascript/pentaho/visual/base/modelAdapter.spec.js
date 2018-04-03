@@ -563,7 +563,10 @@ define([
             var selectionFilter = modelAdapter.model.selectionFilter;
             expect(selectionFilter).not.toBe(null);
 
-            var expectedFilter = context.instances.get({_: "=", p: CombineStrategy.columnName, v: "PT~fish"});
+            var expectedFilter = context.instances.get({
+              _: "and",
+              o: [ {_: "=", p: CombineStrategy.columnName, v: "PT~fish"} ]
+            });
             expect(selectionFilter.equals(expectedFilter)).toBe(true);
           });
         });
@@ -1007,18 +1010,7 @@ define([
       });
     });
 
-    xdescribe("#_convertFilterToExternal", function () {
-
-      /*
-      beforeEach(function () {
-        spyOn(CombineStrategy.prototype, "map").and.callFake(function (inputValues) {
-          if( inputValues[0] === undefined || inputValues[1] === undefined ) {
-            return null;
-          }
-          return [new Cell( inputValues[0] +"~" + inputValues[1], "")];
-        });
-      });
-      */
+    describe("#_convertFilterToExternal", function () {
 
       it("should convert the filter's internal model namespace to " +
         "the external model namespace (many to one strategy)", function () {
@@ -1052,13 +1044,12 @@ define([
           }
         });
 
-        /*
         var selectionFilter1 = modelAdapter.selectionFilter;
         expect(selectionFilter1).not.toBe(null);
 
         var selectionInternalFilter1 = modelAdapter.model.selectionFilter;
         expect(selectionInternalFilter1).not.toBe(null);
-*/
+
         spyOn(CombineStrategy.prototype, "invert").and.callFake(function () {
           return [new Cell("PT4", "Portugal"), new Cell("bird", "Bird")];
         });
@@ -1094,7 +1085,7 @@ define([
 
     describe("#_convertFilterToInternal", function () {
 
-      describe("When using an identity strategy", function () {
+      describe("using identity strategy", function () {
         var modelAdapter;
         var strategies;
 
@@ -1127,11 +1118,10 @@ define([
             });
           });
 
-
           describe("should convert the filter's external model namespace to " +
             "the internal model namespace ", function() {
 
-            it("when filtering with a top isEquals (C=PT)", function () {
+            it("when filtering with a top isEquals", function () {
 
               var externalFilter = context.instances.get({_: "=", p: "country", v: "PT"});
 
@@ -1183,13 +1173,32 @@ define([
 
           });
 
-
-
         });
 
         describe("and two visual roles", function() {
           beforeEach(function () {
-            var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
+            var TwoVisualRolesModel = Model.extend({
+              $type: {
+                props: {
+                  roleA: {
+                    base: "pentaho/visual/role/property",
+                    modes: [
+                      {dataType: "string"},
+                      {dataType: "number"}
+                    ]
+                  },
+                  roleB: {
+                    base: "pentaho/visual/role/property",
+                    modes: [
+                      {dataType: "string"},
+                      {dataType: "number"}
+                    ]
+                  }
+                }
+              }
+            });
+
+            var DerivedModelAdapter = buildAdapter(ModelAdapter, TwoVisualRolesModel, [
               {
                 name: "roleA",
                 strategies: strategies
@@ -1200,7 +1209,7 @@ define([
               }
             ]);
 
-            var model = new ModelWithStringRole();
+            var model = new TwoVisualRolesModel();
 
             modelAdapter = new DerivedModelAdapter({
               model: model,
@@ -1286,7 +1295,7 @@ define([
 
       });
 
-      describe("When using a combine strategy with one visual role", function () {
+      describe("using combine strategy with one visual role", function () {
 
         var modelAdapter;
 
@@ -1321,7 +1330,7 @@ define([
         describe("should convert the filter's external model namespace to " +
           "the internal model namespace ", function() {
 
-          it("when filtering with an And of isEquals (C=PT & P=fish)", function () {
+          it("when filtering with an And of isEquals", function () {
 
             var externalFilter = context.instances.get({
               _: "and",
@@ -1341,25 +1350,26 @@ define([
             expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
 
-          it("when filtering with an And of isEquals and other operands (C=PT & P=fish & ...other operands)", function () {
+          it("when filtering with an And of isEquals and other operands supported operands", function () {
 
             var externalFilter = context.instances.get({
               _: "and",
               o: [
                 {_: "=", p: "country", v: "PT"},
                 {_: "=", p: "product", v: "fish"},
-                {_: ">", p: "product", v: "5"}
+                {_: "or", o:[{_: "true"}]}
               ]
             });
 
             var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
 
             // ---
+
             var expectedInternalFilter = context.instances.get({
               _: "and",
               o: [
                 {_: "=", p: CombineStrategy.columnName, v: "PT~fish"},
-                {_: ">", p: "product", v: "5"}
+                {_: "or", o:[{_: "true"}]}
               ]
             });
 
@@ -1367,7 +1377,7 @@ define([
             expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
 
-          it("when filtering with an Or of And of isEquals (C=PT & P=fish) | (C=Ireland & P=beer)", function () {
+          it("when filtering with an Or of And of isEquals", function () {
 
             // (C=PT & P=fish) | (C=Ireland & P=beer)
             var externalFilter = context.instances.get({
@@ -1439,7 +1449,7 @@ define([
         });
       });
 
-      describe("should throw with unsupported filter", function () {
+      describe("should throw when converting unsupported filter", function () {
         var modelAdapter;
         var strategies;
 
@@ -1468,7 +1478,7 @@ define([
           });
         });
 
-        it("And with operands other than isEqual, or, and", function () {
+        it("And with > filter", function () {
           var externalFilter = context.instances.get({
             _: "and",
             o: [ {_: ">", p: "something", v: 5 } ]

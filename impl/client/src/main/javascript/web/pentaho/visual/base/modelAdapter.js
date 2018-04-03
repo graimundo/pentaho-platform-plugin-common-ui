@@ -607,6 +607,8 @@ define([
         var equalsMap;
 
         switch (filter.kind) {
+          case "true":
+          case "false":
           case "or":
             return null;
           case "and":
@@ -614,8 +616,10 @@ define([
             equalsMap = null;
             var operands = [];
 
-            for(var iOperand=0; iOperand < filter.operands.count; iOperand++) {
-              var operandFilter = filter.operands.at(iOperand);
+            var filterOperands = filter.operands;
+            var filterOperandsCount = filterOperands.count;
+            for(var iOperand=0; iOperand < filterOperandsCount; iOperand++) {
+              var operandFilter = filterOperands.at(iOperand);
 
               if(operandFilter.kind === "isEqual") {
                 if(equalsMap === null) {
@@ -656,7 +660,6 @@ define([
 
             return filter !== null ? filter : TrueFilter.instance;
           default:
-            // For now, only And, Or and IsEqual filter are supported.
             throw error.argInvalid("filter", "Converting " + filter.kind + " filter is not supported.");
         }
       }
