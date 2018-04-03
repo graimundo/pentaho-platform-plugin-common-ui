@@ -637,7 +637,7 @@ define([
 
             // if isEqual operands found for And filter
             if(equalsMap !== null) {
-              // Map internal values to external values.
+              // Map internal/external values to external/internal values.
               equalsMap = this.modelAdapter.__convertValuesMap(equalsMap, this.toExternal);
 
               operands.push.apply(operands, Object.keys(equalsMap).map(function(propName) {

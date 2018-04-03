@@ -1094,140 +1094,199 @@ define([
 
     describe("#_convertFilterToInternal", function () {
 
-
       describe("When using an identity strategy", function () {
         var modelAdapter;
+        var strategies;
 
         beforeEach(function () {
-          var strategies = [ElementIdentityStrategy.type];
+          strategies = [ElementIdentityStrategy.type];
 
           spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function (inputValues) {
             return [new Cell(inputValues[0], "")];
           });
-
-          var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
-            {
-              name: "roleA",
-              strategies: strategies
-            }
-          ]);
-
-          var model = new ModelWithStringRole();
-
-          modelAdapter = new DerivedModelAdapter({
-            model: model,
-            data: new Table(getDataSpec2()),
-            roleA: {
-              fields: ["country"]
-            }
-          });
         });
 
+        describe("and one visual role", function() {
 
-        describe("should convert the filter's external model namespace to " +
-          "the internal model namespace ", function() {
+          beforeEach(function () {
+            var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
+              {
+                name: "roleA",
+                strategies: strategies
+              }
+            ]);
 
-          it("when filtering with a top isEquals (C=PT)", function () {
+            var model = new ModelWithStringRole();
 
-            var externalFilter = context.instances.get({_: "=", p: "country", v: "PT"});
-
-            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
-
-            // ---
-            var expectedInternalFilter = context.instances.get({_: "=", p: "country", v: "PT"});
-            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
-          });
-
-          it("when filtering a top Or", function () {
-            var externalFilter = context.instances.get({
-              _: "or",
-              o: [
-                {_: "=", p: "country", v: "PT"},
-                {_: "=", p: "country", v: "Ireland"}
-                ]
+            modelAdapter = new DerivedModelAdapter({
+              model: model,
+              data: new Table(getDataSpec2()),
+              roleA: {
+                fields: ["country"]
+              }
             });
-
-            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
-
-            // ---
-            var expectedInternalFilter = context.instances.get({
-              _: "or",
-              o: [
-                {_: "=", p: "country", v: "PT"},
-                {_: "=", p: "country", v: "Ireland"}
-              ]
-            });
-            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
-
-          });
-
-          xit("when filtering a top And of different properties", function () {
-            var externalFilter = context.instances.get({
-              _: "and",
-              o: [
-                {_: "=", p: "country", v: "PT"},
-                {_: "=", p: "product", v: "fish"}
-              ]
-            });
-
-            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
-
-            // ---
-            var expectedInternalFilter = context.instances.get({
-              _: "and",
-              o: [
-                {_: "=", p: "country", v: "PT"},
-                {_: "=", p: "product", v: "fish"}
-              ]
-            });
-            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
 
 
-          it("when filtering a top And of mismatching values", function () {
-            var externalFilter = context.instances.get({
-              _: "and",
-              o: [
-                {_: "=", p: "country", v: "PT"},
-                {_: "=", p: "country", v: "Ireland"}
-              ]
+          describe("should convert the filter's external model namespace to " +
+            "the internal model namespace ", function() {
+
+            it("when filtering with a top isEquals (C=PT)", function () {
+
+              var externalFilter = context.instances.get({_: "=", p: "country", v: "PT"});
+
+              var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+              // ---
+              var expectedInternalFilter = context.instances.get({_: "=", p: "country", v: "PT"});
+              expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
             });
 
-            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
-
-            // ---
-            var expectedInternalFilter = context.instances.get({_: "false"});
-            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
-          });
-
-        });
-
-        describe("should throw", function () {
-
-          it("And with operands other than isEqual, or, and", function () {
-            var externalFilter = context.instances.get({
-              _: "and",
-              o: [
-                {_: ">",
+            it("when filtering a top Or", function () {
+              var externalFilter = context.instances.get({
+                _: "or",
                 o: [
-                  {_: "=", p: "country", v: "PT"}
-                ]}
+                  {_: "=", p: "country", v: "PT"},
+                  {_: "=", p: "country", v: "Ireland"}
+                ]
+              });
+
+              var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+              // ---
+              var expectedInternalFilter = context.instances.get({
+                _: "or",
+                o: [
+                  {_: "=", p: "country", v: "PT"},
+                  {_: "=", p: "country", v: "Ireland"}
+                ]
+              });
+              expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
+
+            });
+
+            it("when filtering a top And of mismatching values", function () {
+              var externalFilter = context.instances.get({
+                _: "and",
+                o: [
+                  {_: "=", p: "country", v: "PT"},
+                  {_: "=", p: "country", v: "Ireland"}
+                ]
+              });
+
+              var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+              // ---
+              var expectedInternalFilter = context.instances.get({_: "false"});
+              expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
+            });
+
+          });
+
+
+
+        });
+
+        describe("and two visual roles", function() {
+          beforeEach(function () {
+            var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
+              {
+                name: "roleA",
+                strategies: strategies
+              },
+              {
+                name: "roleB",
+                strategies: strategies
+              }
+            ]);
+
+            var model = new ModelWithStringRole();
+
+            modelAdapter = new DerivedModelAdapter({
+              model: model,
+              data: new Table(getDataSpec2()),
+              roleA: {
+                fields: ["country"]
+              },
+              roleB: {
+                fields: ["product"]
+              }
+            });
+          });
+
+          it("when filtering a top And of different properties", function () {
+            var externalFilter = context.instances.get({
+              _: "and",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "=", p: "product", v: "fish"}
               ]
             });
 
-            var act = function() {
-              modelAdapter._convertFilterToInternal(externalFilter);
-            };
+            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
 
             // ---
-            expect(act).toThrow(errorMatch.argInvalid("filter"));
+            var expectedInternalFilter = context.instances.get({
+              _: "and",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "=", p: "product", v: "fish"}
+              ]
+            });
+            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
+          });
+
+          it("when filtering nested Ands they are flattened ", function () {
+            var externalFilter = context.instances.get({
+              _: "and",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "and",
+                  o: [{_: "=", p: "product", v: "fish"}]}
+              ]
+            });
+
+            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+            // ---
+            var expectedInternalFilter = context.instances.get({
+              _: "and",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "=", p: "product", v: "fish"}
+              ]
+            });
+            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
+          });
+
+          it("when filtering nested Ors they are flattened ", function () {
+            var externalFilter = context.instances.get({
+              _: "or",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "or",
+                  o: [{_: "=", p: "product", v: "fish"}]}
+              ]
+            });
+
+            var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
+
+            // ---
+            var expectedInternalFilter = context.instances.get({
+              _: "or",
+              o: [
+                {_: "=", p: "country", v: "PT"},
+                {_: "=", p: "product", v: "fish"}
+              ]
+            });
+            expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
 
         });
 
-       });
+      });
 
-      describe("When using a combine strategy", function () {
+      describe("When using a combine strategy with one visual role", function () {
 
         var modelAdapter;
 
@@ -1275,7 +1334,10 @@ define([
             var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
 
             // ---
-            var expectedInternalFilter = context.instances.get({_: "=", p: CombineStrategy.columnName, v: "PT~fish"});
+            var expectedInternalFilter = context.instances.get({
+              _: "and",
+              o: [ { _: "=", p: CombineStrategy.columnName, v: "PT~fish"}]
+            });
             expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
 
@@ -1286,17 +1348,22 @@ define([
               o: [
                 {_: "=", p: "country", v: "PT"},
                 {_: "=", p: "product", v: "fish"},
-                {
-                  _: "and",
-                  o: [ ]
-                }
+                {_: ">", p: "product", v: "5"}
               ]
             });
 
             var actualInternalFilter = modelAdapter._convertFilterToInternal(externalFilter);
 
             // ---
-            var expectedInternalFilter = context.instances.get({_: "=", p: CombineStrategy.columnName, v: "PT~fish"});
+            var expectedInternalFilter = context.instances.get({
+              _: "and",
+              o: [
+                {_: "=", p: CombineStrategy.columnName, v: "PT~fish"},
+                {_: ">", p: "product", v: "5"}
+              ]
+            });
+
+
             expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
 
@@ -1327,9 +1394,12 @@ define([
             var expectedInternalFilter = context.instances.get({
               _: "or",
               o: [
-                {_: "=", p: CombineStrategy.columnName, v: "PT~fish"},
-                {_: "=", p: CombineStrategy.columnName, v: "Ireland~beer"}]
-            } );
+                {_: "and",
+                 o: [{_: "=", p: CombineStrategy.columnName, v: "PT~fish"}]},
+                {_: "and",
+                  o: [{_: "=", p: CombineStrategy.columnName, v: "Ireland~beer"}]}
+                  ]
+            });
             expect(actualInternalFilter.equals(expectedInternalFilter)).toBe(true);
           });
         });
@@ -1369,6 +1439,50 @@ define([
         });
       });
 
+      describe("should throw with unsupported filter", function () {
+        var modelAdapter;
+        var strategies;
+
+        beforeEach(function () {
+          strategies = [ElementIdentityStrategy.type];
+
+          spyOn(ElementIdentityStrategy.prototype, "map").and.callFake(function (inputValues) {
+            return [new Cell(inputValues[0], "")];
+          });
+
+          var DerivedModelAdapter = buildAdapter(ModelAdapter, ModelWithStringRole, [
+            {
+              name: "roleA",
+              strategies: strategies
+            }
+          ]);
+
+          var model = new ModelWithStringRole();
+
+          modelAdapter = new DerivedModelAdapter({
+            model: model,
+            data: new Table(getDataSpec2()),
+            roleA: {
+              fields: ["country"]
+            }
+          });
+        });
+
+        it("And with operands other than isEqual, or, and", function () {
+          var externalFilter = context.instances.get({
+            _: "and",
+            o: [ {_: ">", p: "something", v: 5 } ]
+          });
+
+          var act = function() {
+            modelAdapter._convertFilterToInternal(externalFilter);
+          };
+
+          // ---
+          expect(act).toThrow(errorMatch.argInvalid("filter"));
+        });
+
+      });
     });
   });
 });
